@@ -1,0 +1,5 @@
+Test the log!
+PASSED TRUTHY CHECK
+	File is valid after creation
+PASSED FALSITY CHECK
+	File is invalid after deletion

@@ -2,6 +2,7 @@
 #define PAGE
 
 #include <cstring>
+#include <unistd.h>
 
 #define PAGE_SIZE 4096
 #define INIT_PAGES 500
@@ -14,10 +15,6 @@ public:
 
     Page(unsigned char *data) {
         memcpy(bytes, data, PAGE_SIZE);
-    }
-
-    ~Page() {
-
     }
 };
 

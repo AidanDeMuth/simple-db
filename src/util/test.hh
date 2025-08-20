@@ -9,59 +9,79 @@
 #include <limits.h>
 
 #include <string>
+#include <vector>
 
 #include "../util/error.hh"
 
 class Tester {
-    private:
-    int logFD;
-    std::string logPath;
-
     public:
-    Tester(std::string logPath) {
-        this->logPath = logPath;
-    }
+    static void runTest(std::vector<void(*)()> &tests, std::string testName, std::string logPath) {
+        int logFD = open(logPath.c_str(), O_TRUNC | O_RDWR | O_CREAT, 0777);
+        ERROR_KILL(logFD, "Tester open", exit);
 
-    void startTest() {
-        this->logFD = open(this->logPath.c_str(), O_TRUNC | O_RDWR | O_CREAT, 0777);
-        ERROR_KILL(this->logFD, "openc", exit);
-    }
+        Tester::writeHeader(testName, logFD);
 
-    void endTest() {
-        int closeCheck = close(this->logFD);
-        ERROR_KILL(closeCheck, "close", exit);
-    }
-
-    void logWrite(std::string log) {
-        write(this->logFD, log.c_str(), log.length());
-        write(this->logFD, "\n", 1);    
-    }
-
-    void writeHeader(std::string header) {
-        write(this->logFD, header.c_str(), header.length());
-        write(this->logFD, "\n", 1);
-    }
-
-    void checkTrue(bool val, std::string testName) {
-        if (val) { 
-            logWrite("PASSED TRUTHY CHECK"); 
-        }
-        else { 
-            logWrite("FAILED - EXPECTED TRUE");
+        // Absorb the error, so we can run many tests with this object
+        for (auto& test : tests) {
+            try {
+                test();
+            }
+            catch (std::runtime_error& err) {
+                printf("%s", err.what());
+                Tester::logWrite(err.what(), logFD);
+            }
         }
 
-        logWrite("\t" + testName);
+        int closeCheck = close(logFD);
+        ERROR_KILL(closeCheck, "Tester close", exit);
     }
 
-    void checkFalse(bool val, std::string testName) {
-        if (!val) { 
-            logWrite("PASSED FALSITY CHECK"); 
-        }
-        else { 
-            logWrite("FAILED - EXPECTED FALSE"); 
-        }
+    static void logWrite(std::string logMessage, int logFD) {
+        write(logFD, logMessage.c_str(), logMessage.length());
+        write(logFD, "\n", 1);    
+    }
 
-        logWrite("\t" + testName);
+    static void writeHeader(std::string header, int logFD) {
+        write(logFD, header.c_str(), header.length());
+        write(logFD, "\n", 1);
+    }
+
+    /* checkTrue()
+     * val
+     * testName: give the assert statement a name, so if it fails you can track it.
+     *
+     * Operates as an assert.isTrue(<boolean-value>)
+     */
+    static void checkTrue(bool val, std::string testName) {
+        if (val) { return; }
+        
+        throw std::runtime_error("FAILED TRUTHY CHECK - " + testName);
+    }
+
+    /* checkFalse()
+     * val
+     * testName: give the assert statement a name, so if it fails you can track it.
+     *
+     * Operates as an assert.isFalse(<boolean-value>)
+     */
+    static void checkFalse(bool val, std::string testName) {
+        if (!val) { return; }
+
+        throw std::runtime_error("FAILED FALSY CHECK - " + testName);
+    }
+
+    /* checkError()
+     * val
+     * testName
+     *
+     * Checks if typical POSIX functions return less than zero, which
+     * typically returns an error. Useful for checking things like loading
+     * files.
+     */
+    static void checkError(int val, std::string testName) {
+        if (val > 0) { return; }
+
+        throw std::runtime_error("FAILED ERROR CHECK - " + testName);
     }
 };
 

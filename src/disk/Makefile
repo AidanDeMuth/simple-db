@@ -2,9 +2,9 @@ CXX = g++
 CXXFLAGS = -Wall -std=c++17
 
 # executable
-TARGET = disk
+TARGET = disk_build
 
-# sources to compile
+# sources to compiles
 SRCS = test_disk.cpp
 
 OBJS = $(SRCS:.cpp=.o)

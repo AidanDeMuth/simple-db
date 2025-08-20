@@ -1,35 +1,36 @@
 #include "disk.hh"
+#include "page.hh"
 
 #include "../util/error.hh"
 #include "../util/test.hh"
 
-void testCreateAndDelete(Tester test, std::string testName) {
-    test.writeHeader(testName);
+#include "../util/project_config.hh"
 
-    std::string dbFilePath = "/test/test_db_files/test-file.sdb";
+// Make sure a file can be opened/closed
+void testDisk() {
+    std::string dbFilePath = config::PROJECT_ROOT + "/test/test_db_files/test-file.sdb";
 
     createFile(dbFilePath);
-    test.checkTrue(checkExistsDB(dbFilePath), "File is valid after creation");
+    Tester::checkTrue(checkExistsDB(dbFilePath), "File is valid after creation");
 
-    printf("%d", checkExistsDB(dbFilePath));
-   
+    // Load and close - make sure it's still a file after closing
+    int fileDescriptor = loadFile(dbFilePath);
+    Tester::checkError(fileDescriptor, "File can open after creation");
+
+    closeFile(fileDescriptor);
+    Tester::checkTrue(checkExistsDB(dbFilePath), "File is valid after closing");
+
     deleteFile(dbFilePath);
-    test.checkFalse(checkExistsDB(dbFilePath), "File is invalid after deletion");
-}
+    Tester::checkFalse(checkExistsDB(dbFilePath), "File is invalid after deletion");
+} 
 
 int main() {
-    Tester test("test/test_logs/test_init_db.txt");
-    test.startTest();
-
-    try {
-        testCreateAndDelete(test, "Test the log!");
-    }
-    catch (std::runtime_error err) {
-        printf("%s", err.what());
-    }
-    printf("Ending the log");
-
-    test.endTest();
-
-    // createDB("./db_files/test");
+    std::vector<void(*)()> tests = {
+        testDisk
+    };
+    Tester::runTest(
+        tests, 
+        "Test Creation, Deletion, Existence of files", 
+        config::PROJECT_ROOT + "/test/test_logs/test_init_db.txt"
+    );
 }

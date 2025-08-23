@@ -5,7 +5,7 @@ CXXFLAGS = -Wall -std=c++17
 TARGET = disk_build
 
 # sources to compiles
-SRCS = test_disk.cpp
+SRCS = disk.cpp test_disk.cpp 
 
 OBJS = $(SRCS:.cpp=.o)
 

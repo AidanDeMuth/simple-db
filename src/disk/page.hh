@@ -4,17 +4,33 @@
 #include <cstring>
 #include <unistd.h>
 
-#define PAGE_SIZE 4096
-#define INIT_PAGES 500
+#include "../util/project_config.hh"
 
 class Page {
+private:
+    unsigned char data[config::PAGE_SIZE];
+
 public:
-    unsigned char bytes[PAGE_SIZE] = {0};
+    /* Page()
+     *
+     * Need two constructors - one to create a new page with empty data,
+     * and one to take in data and be treated as a page, possibly for
+     * in-memory manipulation
+     */
+    Page() {
+        memset(this->data, 0, config::PAGE_SIZE);
+    }
+    Page(void *data) {
+        memcpy(this->data, data, config::PAGE_SIZE);
+    }
 
-    Page() {}
+    // Returns the REFERENCE to the bytes
+    unsigned char *getData() {
+        return this->data;
+    }
 
-    Page(unsigned char *data) {
-        memcpy(bytes, data, PAGE_SIZE);
+    void setData(void *data) {
+        memcpy(this->data, data, config::PAGE_SIZE);
     }
 };
 

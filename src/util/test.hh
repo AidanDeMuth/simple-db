@@ -1,5 +1,5 @@
-#ifndef TEST_ENGINE
-#define TEST_ENGINE
+#ifndef TEST
+#define TEST
 
 #include <assert.h>
 #include <fcntl.h>
@@ -13,13 +13,25 @@
 
 #include "../util/error.hh"
 
-class Tester {
-    public:
-    static void runTest(std::vector<void(*)()> &tests, std::string testName, std::string logPath) {
-        int logFD = open(logPath.c_str(), O_TRUNC | O_RDWR | O_CREAT, 0777);
-        ERROR_KILL(logFD, "Tester open", exit);
+namespace test{
+    void runTest(std::vector<void(*)()> &tests, std::string testName, int logFD);
+    void logWrite(std::string logMessage, int logFD);
+    void writeHeader(std::string header, int logFD);
+    void writeFooter(std::string footer, int logFD);
 
-        Tester::writeHeader(testName, logFD);
+    void checkTrue(bool val, std::string testName);
+    void checkFalse(bool val, std::string testName);
+    void checkError(int val, std::string testName);
+    template <typename T> void checkEqual(T val, T expected);
+    void checkBufferEqual(void *buf1, void *buf2, int length);
+    
+    /* runTest()
+     * tests: A vector of test functions to be run
+     * testName: Test group name
+     * logFD: open file descriptor in which a log file should be written to
+     */
+    void runTest(std::vector<void(*)()> &tests, std::string testName, int logFD) {
+        writeHeader(testName, logFD);
 
         // Absorb the error, so we can run many tests with this object
         for (auto& test : tests) {
@@ -28,22 +40,26 @@ class Tester {
             }
             catch (std::runtime_error& err) {
                 printf("%s", err.what());
-                Tester::logWrite(err.what(), logFD);
+                logWrite(err.what(), logFD);
             }
-        }
+        } 
 
-        int closeCheck = close(logFD);
-        ERROR_KILL(closeCheck, "Tester close", exit);
+        writeFooter("Tests Finished", logFD);
     }
 
-    static void logWrite(std::string logMessage, int logFD) {
+    void logWrite(std::string logMessage, int logFD) {
         write(logFD, logMessage.c_str(), logMessage.length());
         write(logFD, "\n", 1);    
     }
 
-    static void writeHeader(std::string header, int logFD) {
+    void writeHeader(std::string header, int logFD) {
         write(logFD, header.c_str(), header.length());
         write(logFD, "\n", 1);
+    }
+
+    void writeFooter(std::string footer, int logFD) {
+        write(logFD, footer.c_str(), footer.length());
+        write(logFD, "\n\n", 2);
     }
 
     /* checkTrue()
@@ -52,10 +68,10 @@ class Tester {
      *
      * Operates as an assert.isTrue(<boolean-value>)
      */
-    static void checkTrue(bool val, std::string testName) {
+    void checkTrue(bool val) {
         if (val) { return; }
         
-        throw std::runtime_error("FAILED TRUTHY CHECK - " + testName);
+        throw std::runtime_error("FAILED TRUTHY CHECK");
     }
 
     /* checkFalse()
@@ -64,10 +80,10 @@ class Tester {
      *
      * Operates as an assert.isFalse(<boolean-value>)
      */
-    static void checkFalse(bool val, std::string testName) {
+    void checkFalse(bool val) {
         if (!val) { return; }
 
-        throw std::runtime_error("FAILED FALSY CHECK - " + testName);
+        throw std::runtime_error("FAILED FALSY CHECK");
     }
 
     /* checkError()
@@ -78,10 +94,46 @@ class Tester {
      * typically returns an error. Useful for checking things like loading
      * files.
      */
-    static void checkError(int val, std::string testName) {
+    void checkError(int val) {
         if (val > 0) { return; }
 
-        throw std::runtime_error("FAILED ERROR CHECK - " + testName);
+        throw std::runtime_error("FAILED ERROR CHECK");
+    }
+
+    /* checkEqual()
+     * val: the value we assert to be equal
+     * expected: static value we desire
+     *
+     * Generalized comparison function, asserts that the first value
+     * is equal to the second one.
+     */
+    template <typename T>
+    void checkEqual(T val, T expected) {
+        if (val == expected) { return; }
+
+        throw std::runtime_error("FAILED EQUALITY CHECK");
+    }
+
+    /* checkBuffers()
+     * buf1: output buffer to compare
+     * buf2: control buffer
+     * length: how long to compare the buffers
+     *
+     * It is often the case that we want to check if every byte of
+     * a buffer is equal to every byte in another one, especially
+     * with pages.
+     */
+    void checkBufferEqual(void *buf1, void *buf2, int length) {
+        unsigned char *b1 = (unsigned char *) buf1; 
+        unsigned char *b2 = (unsigned char *) buf2;
+
+        for (int i = 0; i < length; i++) {
+            if (b1[i] != b2[i]) {
+                throw std::runtime_error("FAILED BUFFER CHECK");
+            }
+        }
+
+        return;
     }
 };
 

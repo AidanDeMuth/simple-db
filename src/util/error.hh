@@ -1,5 +1,5 @@
-#ifndef ERROR_ENGINE
-#define ERROR_ENGINE
+#ifndef ERROR
+#define ERROR
 
 #include <stdexcept>
 

@@ -1,12 +1,11 @@
-#ifndef ERROR
-#define ERROR
+#pragma once
 
 #include <stdexcept>
 
-#define ERROR_KILL(err, function, action) \
+#define ERROR_KILL(err, message, action) \
         do { \
             if ((err) < 0) { \
-                perror(function); \
+                perror(message); \
                 action(-1); \
             } \
         } while(0)
@@ -18,4 +17,10 @@
             } \
         } while(0)
 
-#endif
+#define IFERROR_CALLBACK(err, callback, args) \
+        do { \
+            if ((err) < 0) { \
+                callback(args) \
+            } \
+        } while(0)
+        

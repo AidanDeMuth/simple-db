@@ -1,14 +1,11 @@
-#ifndef DISK
-#define DISK
+#pragma once
 
 #include <string>
+#include <vector>
+#include <unordered_map>
 
 namespace disk {
-    bool checkExistsDB(std::string filePath);
+    bool checkExistsFile(std::string filePath);
     void createFile(std::string filePath);
     void deleteFile(std::string filePath);
-    int loadFile(std::string filePath);
-    void closeFile(int fileDesc);
 }
-
-#endif

@@ -1,8 +1,8 @@
 CXX = g++
 CXXFLAGS = -Wall -std=c++17
 
-BUILD_DIR = ../../build/disk
-SRCS = disk.cpp config.cpp
+BUILD_DIR = ../../build/heap
+SRCS = page.cpp heapPage.cpp
 OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 
 all: $(BUILD_DIR) $(OBJS)

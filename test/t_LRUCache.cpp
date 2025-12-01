@@ -2,9 +2,9 @@
 
 void testLL() {
     LL *ll = new LL();
-    LLNode t1 = {1, new HeapPage(), nullptr, nullptr}; 
-    LLNode t2 = {2, new HeapPage(), nullptr, nullptr};
-    LLNode t3 = {3, new HeapPage(), nullptr, nullptr};
+    Frame t1 = {1, new HeapPage(), nullptr, nullptr}; 
+    Frame t2 = {2, new HeapPage(), nullptr, nullptr};
+    Frame t3 = {3, new HeapPage(), nullptr, nullptr};
     ll->insertHead(&t1);
     ll->insertHead(&t2);
     ll->insertHead(&t3);
@@ -18,9 +18,9 @@ void testLL() {
 
 void testHT() {
     HT *ht = new HT();
-    LLNode t1 = {1, new HeapPage(), nullptr, nullptr}; 
-    LLNode t2 = {2, new HeapPage(), nullptr, nullptr};
-    LLNode t3 = {102, new HeapPage(), nullptr, nullptr};
+    Frame t1 = {1, new HeapPage(), nullptr, nullptr}; 
+    Frame t2 = {2, new HeapPage(), nullptr, nullptr};
+    Frame t3 = {102, new HeapPage(), nullptr, nullptr};
 
     ht->insert(&t1);
     ht->insert(&t2);

@@ -8,43 +8,43 @@ LL::LL() {
 }
 
 LL::~LL() {
-    LLNode *iterate = head;
+    Frame *iterate = head;
 
     while (iterate) {
-        LLNode *remove = iterate;
+        Frame *remove = iterate;
         iterate = iterate->next;
 
         delete remove;
     }
 }
 
-void LL::insertHead(LLNode *llnode) {
-    llnode->prev = nullptr;
-    llnode->next = head;
+void LL::insertHead(Frame *Frame) {
+    Frame->prev = nullptr;
+    Frame->next = head;
 
-    if (head) { head->prev = llnode; }
-    head = llnode;
+    if (head) { head->prev = Frame; }
+    head = Frame;
 
     // If first entry, need to adjust the tail
-    if (!tail) { tail = llnode; }
+    if (!tail) { tail = Frame; }
 }
 
-void LL::moveToHead(LLNode *llnode) {
+void LL::moveToHead(Frame *Frame) {
     // Can be from arbitrary location
-    if (llnode == head) { return; }
+    if (Frame == head) { return; }
 
     // Now, node is in [second element, tail], so detach
-    if (llnode->prev) { llnode->prev->next = llnode->next; }
-    if (llnode->next) { llnode->next->prev = llnode->prev; }
-    if (llnode == tail) { tail = llnode->prev; }
+    if (Frame->prev) { Frame->prev->next = Frame->next; }
+    if (Frame->next) { Frame->next->prev = Frame->prev; }
+    if (Frame == tail) { tail = Frame->prev; }
 
-    insertHead(llnode);
+    insertHead(Frame);
 }
 
-LLNode *LL::removeTail() {
+Frame *LL::removeTail() {
     if (!tail) { return nullptr; }
 
-    LLNode *ret = tail; // save reference
+    Frame *ret = tail; // save reference
 
     // we do have a tail, unlink it and set head/tail correctly
     // otherwise
@@ -56,11 +56,11 @@ LLNode *LL::removeTail() {
 }
 
 void LL::dump() {
-    LLNode *iterate = head;
+    Frame *iterate = head;
     
     printf("Dumping linked list: PID, HeapPage\n");
     while (iterate) {
-        printf("LLNODE: %d %p\n", iterate->pageid, iterate);
+        printf("Frame: %d %p\n", iterate->pageid, iterate);
         iterate = iterate->next;
     }
 }
@@ -75,10 +75,10 @@ HT::HT() {
 
 HT::~HT() { }
 
-LLNode *HT::find(int32 pageid) {
+Frame *HT::find(int32 pageid) {
     int32 index = HT::getHash(pageid);
 
-    LLNode *iterate = table[index];
+    Frame *iterate = table[index];
     while (iterate) {
         if (iterate->pageid == pageid) { return iterate; }
 
@@ -88,20 +88,20 @@ LLNode *HT::find(int32 pageid) {
     return nullptr;
 }
 
-void HT::insert(LLNode *llnode) {
-    int32 index = HT::getHash(llnode->pageid);
+void HT::insert(Frame *Frame) {
+    int32 index = HT::getHash(Frame->pageid);
 
     // Set new front of list
-    llnode->bucketNext = table[index];
-    table[index] = llnode;
+    Frame->bucketNext = table[index];
+    table[index] = Frame;
 }
 
 void HT::remove(int32 pageid) {
     int32 index = HT::getHash(pageid);
 
     // Need to consider case of unlinking head
-    LLNode *prev = nullptr;
-    LLNode *iterate = table[index];
+    Frame *prev = nullptr;
+    Frame *iterate = table[index];
     while (iterate) {
         // Unlink if found
         if (iterate->pageid == pageid) {
@@ -120,13 +120,13 @@ void HT::remove(int32 pageid) {
 
 void HT::dump() {
     for (int i = 0; i < HT_SIZE; i++) {
-        LLNode *iterate = table[i];
+        Frame *iterate = table[i];
 
         if (iterate) {
             printf("Bucket %d:\n", i);
 
             while (iterate) {
-                printf("  pageid is %d, LLNode ptr is %p\n", iterate->pageid, iterate);
+                printf("  pageid is %d, Frame ptr is %p\n", iterate->pageid, iterate);
                 iterate = iterate->bucketNext;
             }
         }
@@ -143,7 +143,7 @@ LRUCache::LRUCache(int32 capacity) {
 LRUCache::~LRUCache() {}
 
 HeapPage *LRUCache::get(int32 pageid) {
-    LLNode *found = this->ht.find(pageid);
+    Frame *found = this->ht.find(pageid);
     if (!found) { return nullptr; } // Cache miss
 
     this->ll.moveToHead(found);
@@ -155,7 +155,7 @@ HeapPage *LRUCache::get(int32 pageid) {
  *
  */
 void LRUCache::set(int32 pageid, HeapPage *heapPage) {
-    LLNode *found = this->ht.find(pageid);
+    Frame *found = this->ht.find(pageid);
 
     // If exists already, update it and bail
     if (found) {
@@ -165,7 +165,7 @@ void LRUCache::set(int32 pageid, HeapPage *heapPage) {
     }
 
     // Allocate and add new node
-    LLNode *newNode = new LLNode;
+    Frame *newNode = new Frame;
     newNode->pageid = pageid;
     newNode->heapPage = heapPage;
     this->ll.insertHead(newNode);
@@ -174,7 +174,7 @@ void LRUCache::set(int32 pageid, HeapPage *heapPage) {
 
     // SIZE CHECK
     if (this->size > this->capacity) {
-        LLNode *evict = this->ll.removeTail();
+        Frame *evict = this->ll.removeTail();
         this->ht.remove(evict->pageid);
 
         delete evict;

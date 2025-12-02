@@ -3,4 +3,4 @@
 #include <heapPage.hh>
 #include <spaceMap.hh>
 #include <headerPage.hh>
-#include <LRUCache.hh>
+#include <buffer.hh>

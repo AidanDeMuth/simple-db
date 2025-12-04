@@ -160,6 +160,7 @@ public:
     BufferStatus pinPage(Key key, Page **outPage);
     void markDirty(Key key);
     BufferStatus unpinPage(Key key);
+    BufferStatus flushBuffer();
 
     void dump();
 };

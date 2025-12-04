@@ -66,7 +66,7 @@ DiskStatus Disk::deleteDB() {
 }
 
 DiskStatus Disk::readPage(int32 pageid, byte *buf) {
-    if (!this->isOpen) { openDB(); }
+    if (!this->isOpen) { return DiskStatus::FileNotOpen; }
 
     int32 bytes = pread(this->fd, buf, PAGE_SIZE, (pageid * PAGE_SIZE));
 
@@ -87,7 +87,7 @@ DiskStatus Disk::readPage(int32 pageid, byte *buf) {
  * managed by the database.
  */
 DiskStatus Disk::writePage(int32 pageid, byte *buf) {
-    if (!this->isOpen) { openDB(); }
+    if (!this->isOpen) { return DiskStatus::FileNotOpen; }
 
     int32 bytes = pwrite(this->fd, buf, PAGE_SIZE, (pageid * PAGE_SIZE));
 

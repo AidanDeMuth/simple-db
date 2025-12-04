@@ -1,10 +1,20 @@
 #pragma once
 
 #include <typedefs.hh>
+
 #include <page.hh>
+#include <disk.hh>
 
 constexpr int32 HT_SIZE = 100;
 constexpr int32 HT_MODULO = 100;
+
+/* Buffer Status Enums - for error handling */
+enum class BufferStatus {
+    OK,
+    IOError,
+    NegativePins,
+    NotFound
+};
 
 /* Key
  *
@@ -50,15 +60,15 @@ struct Frame {
 
     Frame() :
         key(Key(-1)),
-        page(nullptr),
+        page(new Page()),
         dirty(0),
         pinCount(0),
         prev(nullptr),
         next(nullptr),
         bucketNext(nullptr) {}
-    Frame(Key k, Page *p) :
+    Frame(Key k) :
         key(k),
-        page(p),
+        page(new Page()),
         dirty(0),
         pinCount(0),
         prev(nullptr),
@@ -142,13 +152,14 @@ public:
 class Buffer {
 public:
     LRUCache cache;
+    Disk &disk;
 
-    Buffer(int32 capacity);
+    Buffer(int32 capacity, Disk &disk);
     ~Buffer();
 
-    Page *pinPage(Key key);
+    BufferStatus pinPage(Key key, Page **outPage);
     void markDirty(Key key);
-    void unpinPage(Key key);
+    BufferStatus unpinPage(Key key);
 
     void dump();
 };

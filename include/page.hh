@@ -22,10 +22,13 @@ constexpr int16 P_SPACEMAP = 2;
 
 class Page {
 public:
-    byte buf[PAGE_SIZE];
+    byte data[PAGE_SIZE];
 
     Page();
     ~Page();
+
+    /* Access the buffer */
+    byte *getData();
 
     /* PAGE I/O */
     void writeByte(int16 loc, byte val);

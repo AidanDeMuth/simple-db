@@ -183,43 +183,59 @@ void LRUCache::dump() {
     this->ht.dump();
 }
 
-/* BUFFER WRAPPER */
+/* BUFFER Functions */
 
-Buffer::Buffer(int32 capacity) : cache(capacity) {}
+Buffer::Buffer(int32 capacity, Disk &disk) : cache(capacity), disk(disk) {}
 
 Buffer::~Buffer() {}
 
 /* pinPage()
  * key: key struct uniquely identifying a page
+ * outPage: Pointer to a page pointer, which is set to the desired
+ *          page.
  *
  * We need to roughly follow "does the page exist in the cache? If it does, get it and pin it, 
  * otherwise pull it from disk and add it to the cache."
  */
-Page *Buffer::pinPage(Key key) {
+BufferStatus Buffer::pinPage(Key key, Page **outPage) {
     Frame *search = this->cache.get(key);
-    if (!search) { // Not in cache, need to check disk
-        // TEMPORARY START
-        Page *diskPage = new Page(); // pretend this is the find from the disk
 
-        if (!diskPage) { return nullptr; } // If the disk returns invalid, bail
+    if (!search) { 
+        // Not in cache, need to check disk
+        Frame *newFrame = new Frame();
+        DiskStatus readStatus = this->disk.readPage(key.pageid, newFrame->page->getData());
+        if (readStatus != DiskStatus::OK) {
+            delete newFrame;
+            *outPage = nullptr;
 
-        search = new Frame(key, diskPage); // Completely temporary
-        // TEMPORARY END
+            return BufferStatus::IOError;
+        }
+        newFrame->key = key;
 
-        // By now we have a valid frame- try to set into the cache.
-        // If the cache returns a frame, it was evicted, so free the memory
-        Frame *cached = this->cache.set(search);
-        if (cached) { 
-            if (cached->dirty) {
-                // TODO: WRITE THE PAGE
+        // Insert into cache
+        Frame *evicted = this->cache.set(newFrame);
+        if (evicted) { 
+            // Write evicted page to disk if dirty
+            if (evicted->dirty) {
+                DiskStatus writeStatus = this->disk.writePage(evicted->key.pageid, evicted->page->getData());
+
+                if (writeStatus != DiskStatus::OK) {
+                    delete evicted;
+                    *outPage = nullptr;
+
+                    return BufferStatus::IOError;
+                }
             }
 
-            delete cached;
+            delete evicted;
         }
+
+        search = newFrame;
     }
 
     search->pinCount++;
-    return search->page;
+    *outPage = search->page;
+    return BufferStatus::OK;
 }
 
 void Buffer::markDirty(Key key) {
@@ -231,13 +247,20 @@ void Buffer::markDirty(Key key) {
     search->dirty = true;
 }
 
-void Buffer::unpinPage(Key key) {
+BufferStatus Buffer::unpinPage(Key key) {
     Frame *search = this->cache.get(key);
-    if (!search) { return; }
+    if (!search) { 
+        return BufferStatus::NotFound; 
+    }
 
     search->pinCount--;
-}
 
+    if (search->pinCount < 0) {
+        return BufferStatus::NegativePins;
+    }
+
+    return BufferStatus::OK;
+}
 
 void Buffer::dump() {
     printf("DUMPING BUFFER:\n===================\n");

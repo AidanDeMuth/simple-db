@@ -4,36 +4,40 @@ Page::Page() {  }
 
 Page::~Page() {  }
 
+byte *Page::getData() {
+    return this->data;
+}
+
 void Page::writeByte(int16 loc, byte val) {
-    buf[loc] = val;
+    data[loc] = val;
 }
 
 void Page::writeInt16(int16 loc, int16 val) {
-    buf[loc] = (val >> 8) & 0xFF;
-    buf[loc + 1] = val & 0xFF;
+    data[loc] = (val >> 8) & 0xFF;
+    data[loc + 1] = val & 0xFF;
 }
 
 void Page::writeInt32(int16 loc, int32 val) {
-    buf[loc] = (val >> 24) & 0xFF;
-    buf[loc + 1] = (val >> 16) & 0xFF;
-    buf[loc + 2] = (val >> 8) & 0xFF;
-    buf[loc + 3] = val & 0xFF;
+    data[loc] = (val >> 24) & 0xFF;
+    data[loc + 1] = (val >> 16) & 0xFF;
+    data[loc + 2] = (val >> 8) & 0xFF;
+    data[loc + 3] = val & 0xFF;
 }
 
 byte Page::readByte(int16 loc) {
-    return buf[loc];
+    return data[loc];
 }
 
 int16 Page::readInt16(int16 loc) {
-    return (buf[loc] << 8) | 
-            (buf[loc + 1]);
+    return (data[loc] << 8) | 
+            (data[loc + 1]);
 }
 
 int32 Page::readInt32(int16 loc) {
-    return ((int32) buf[loc] << 24) |
-            ((int32) buf[loc + 1] << 16) |
-            ((int32) buf[loc + 2] << 8) |
-            ((int32) buf[loc + 3]);
+    return ((int32) data[loc] << 24) |
+            ((int32) data[loc + 1] << 16) |
+            ((int32) data[loc + 2] << 8) |
+            ((int32) data[loc + 3]);
 }
 
 /* Dump a 32 byte wide map of the page for debugging */
@@ -42,7 +46,7 @@ void Page::dump() {
     for (int i = 0; i < PAGE_SIZE; i++) {
         if (i % 32 == 0) { printf("\n"); } // Create a new line every 32 bytes
         // printf("%02X ", page->data[i]);
-        printf("%d ", (int32) buf[i]);
+        printf("%d ", (int32) data[i]);
     }
     printf("\n");
 }

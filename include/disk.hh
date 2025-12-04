@@ -12,6 +12,7 @@
 
 enum class DiskStatus {
     OK,
+    FileNotOpen,
     FileAlreadyExists,
     FileAlreadyOpen,
     IOError,

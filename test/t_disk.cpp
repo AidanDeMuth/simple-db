@@ -28,11 +28,11 @@ void testReadAndWrite() {
     disk->openDB();
 
     Page p;
-    p.buf[5] = 'A';
-    disk->writePage(0, p.buf);
+    p.data[5] = 'A';
+    disk->writePage(0, p.getData());
     Page q;
-    disk->readPage(0, q.buf);
-    assert(q.buf[5] == 'A');
+    disk->readPage(0, q.getData());
+    assert(q.data[5] == 'A');
     // q.dump();
 
     disk->closeDB();

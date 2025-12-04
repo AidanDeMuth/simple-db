@@ -1,7 +1,7 @@
 #pragma once
 
 #include <typedefs.hh>
-#include <heapPage.hh>
+#include <page.hh>
 
 constexpr int32 HT_SIZE = 100;
 constexpr int32 HT_MODULO = 100;
@@ -36,10 +36,10 @@ struct Key {
  */
 struct Frame {
     Key key;
-    HeapPage *heapPage;
+    Page *page;
 
     bool dirty; /* Dirty bit, described whether a page has been written to or not in the cache */
-    int32 pinCount; /* The number of active transactions using the heapPage- essentially > 0 means DO NOT EVICT ME */
+    int32 pinCount; /* The number of active transactions using the page- essentially > 0 means DO NOT EVICT ME */
 
     /* PREV and NEXT pointers for the LINKED LIST */
     Frame *prev;
@@ -50,15 +50,15 @@ struct Frame {
 
     Frame() :
         key(Key(-1)),
-        heapPage(nullptr),
+        page(nullptr),
         dirty(0),
         pinCount(0),
         prev(nullptr),
         next(nullptr),
         bucketNext(nullptr) {}
-    Frame(Key k, HeapPage *hp) :
+    Frame(Key k, Page *p) :
         key(k),
-        heapPage(hp),
+        page(p),
         dirty(0),
         pinCount(0),
         prev(nullptr),
@@ -67,12 +67,12 @@ struct Frame {
 
     // Heap page no longer needed
     ~Frame() {
-        delete heapPage;
+        delete page;
     }
 
     void print() { // Debug
         printf("Key: "); key.print();
-        printf("HP ptr: %p\t dirty: %d\t pin count: %d\n", heapPage, dirty, pinCount);
+        printf("HP ptr: %p\t dirty: %d\t pin count: %d\n", page, dirty, pinCount);
     }
 };
 
@@ -146,7 +146,7 @@ public:
     Buffer(int32 capacity);
     ~Buffer();
 
-    HeapPage *pinPage(Key key);
+    Page *pinPage(Key key);
     void markDirty(Key key);
     void unpinPage(Key key);
 

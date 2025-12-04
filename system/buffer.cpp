@@ -52,7 +52,7 @@ Frame *LL::removeTail() {
 void LL::dump() {
     Frame *iterate = head;
     
-    printf("Dumping linked list: PID, HeapPage\n");
+    printf("Dumping linked list: PID, page\n");
     while (iterate) {
         iterate->print();
         
@@ -195,11 +195,11 @@ Buffer::~Buffer() {}
  * We need to roughly follow "does the page exist in the cache? If it does, get it and pin it, 
  * otherwise pull it from disk and add it to the cache."
  */
-HeapPage *Buffer::pinPage(Key key) {
+Page *Buffer::pinPage(Key key) {
     Frame *search = this->cache.get(key);
     if (!search) { // Not in cache, need to check disk
         // TEMPORARY START
-        HeapPage *diskPage = new HeapPage(); // pretend this is the find from the disk
+        Page *diskPage = new Page(); // pretend this is the find from the disk
 
         if (!diskPage) { return nullptr; } // If the disk returns invalid, bail
 
@@ -219,7 +219,7 @@ HeapPage *Buffer::pinPage(Key key) {
     }
 
     search->pinCount++;
-    return search->heapPage;
+    return search->page;
 }
 
 void Buffer::markDirty(Key key) {

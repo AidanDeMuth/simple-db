@@ -6,7 +6,7 @@ void testLRUCacheSimple() {
     assert(cache.capacity == 3);
     
     for (int i = 0; i < 3; i++) {
-        cache.set(new Frame(Key(i), new HeapPage()));
+        cache.set(new Frame(Key(i), new Page()));
     }
 
     assert(cache.size == 3);
@@ -20,7 +20,7 @@ void testLRUCacheSimple() {
 void testLRUCacheReplacement() {
     LRUCache cache = LRUCache(100);
     for (int i = 0; i < 200; i++) {
-        cache.set(new Frame(Key(i), new HeapPage()));
+        cache.set(new Frame(Key(i), new Page()));
     }
     // Ensure old ones got replaced
     assert(cache.size == 100);

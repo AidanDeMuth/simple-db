@@ -23,6 +23,11 @@ DiskStatus Disk::createDB() {
         return DiskStatus::IOError;
     }
 
+    /* INIT */
+    byte buf[PAGE_SIZE] = {0};
+    pwrite(this->fd, buf, PAGE_SIZE, 0);
+    /* OTHER INIT STUFF???? */
+
     close(this->fd);
     return DiskStatus::OK;
 }

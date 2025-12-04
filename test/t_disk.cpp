@@ -6,6 +6,10 @@ void testCreateOpenClose() {
     DiskStatus create = disk->createDB();
     assert(create == DiskStatus::OK);
 
+    struct stat st;
+    if (stat(disk->filePath.c_str(), &st) == -1) { assert(1 == 2); }
+    assert(st.st_size == PAGE_SIZE);
+
     DiskStatus open = disk->openDB();
     assert(open == DiskStatus::OK);
 
@@ -24,11 +28,11 @@ void testReadAndWrite() {
     disk->openDB();
 
     Page p;
-    p.data[5] = 'A';
-    disk->writePage(0, p.getData());
+    p.buf[5] = 'A';
+    disk->writePage(0, p.buf);
     Page q;
-    disk->readPage(0, q.getData());
-    assert(q.data[5] == 'A');
+    disk->readPage(0, q.buf);
+    assert(q.buf[5] == 'A');
     // q.dump();
 
     disk->closeDB();

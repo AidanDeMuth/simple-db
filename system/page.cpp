@@ -3,19 +3,11 @@
 Page::Page() {
     memset(this->data, 0, PAGE_SIZE);
 }
-Page::Page(const byte *data) {
-    memcpy(this->data, data, PAGE_SIZE);
-}
 Page::~Page() {}
 
-/* Get the data stored by the page */
+/* Get the data ptr of the page */
 byte *Page::getData() {
     return this->data;
-}
-
-/* Set the data into the page */
-void Page::setData(const byte *data) {
-    memcpy(this->data, data, PAGE_SIZE);
 }
 
 /* Dump a 32 byte wide map of the page for debugging */

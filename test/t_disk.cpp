@@ -1,0 +1,41 @@
+#include <simpledb.hh>
+#include <assert.h>
+
+void testCreateOpenClose() {
+    Disk *disk = new Disk("/home/ec2-user/simple-db/test/test_db_files/test_disk.txt");
+    DiskStatus create = disk->createDB();
+    assert(create == DiskStatus::OK);
+
+    DiskStatus open = disk->openDB();
+    assert(open == DiskStatus::OK);
+
+    assert(disk->fd != SYSERR);
+
+    DiskStatus close = disk->closeDB();
+    assert(close == DiskStatus::OK);
+
+    DiskStatus remove = disk->deleteDB();
+    assert(remove == DiskStatus::OK);
+}
+
+void testReadAndWrite() {
+    Disk *disk = new Disk("/home/ec2-user/simple-db/test/test_db_files/test_disk.txt");
+    disk->createDB();
+    disk->openDB();
+
+    Page p;
+    p.data[5] = 'A';
+    disk->writePage(0, p.getData());
+    Page q;
+    disk->readPage(0, q.getData());
+    assert(q.data[5] == 'A');
+    // q.dump();
+
+    disk->closeDB();
+    disk->deleteDB();
+}
+
+int main() {
+    testCreateOpenClose();
+    testReadAndWrite();
+}

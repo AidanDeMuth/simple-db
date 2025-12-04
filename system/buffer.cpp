@@ -9,27 +9,30 @@ LL::LL() {
 
 LL::~LL() {}
 
-void LL::insertHead(Frame *Frame) {
-    Frame->prev = nullptr;
-    Frame->next = head;
+void LL::insertHead(Frame *frame) {
+    frame->prev = nullptr;
+    frame->next = head;
 
-    if (head) { head->prev = Frame; }
-    head = Frame;
+    if (head) { head->prev = frame; }
+    head = frame;
 
     // If first entry, need to adjust the tail
-    if (!tail) { tail = Frame; }
+    if (!tail) { tail = frame; }
 }
 
-void LL::moveToHead(Frame *Frame) {
+void LL::moveToHead(Frame *frame) {
     // Can be from arbitrary location
-    if (Frame == head) { return; }
+    if (frame == head) { return; }
 
     // Now, node is in [second element, tail], so detach
-    if (Frame->prev) { Frame->prev->next = Frame->next; }
-    if (Frame->next) { Frame->next->prev = Frame->prev; }
-    if (Frame == tail) { tail = Frame->prev; }
+    if (frame->prev) { frame->prev->next = frame->next; }
+    if (frame->next) { frame->next->prev = frame->prev; }
+    if (frame == tail) { tail = frame->prev; }
 
-    insertHead(Frame);
+    frame->prev = nullptr;
+    frame->next = head;
+    if (head) head->prev = frame;
+    head = frame; 
 }
 
 Frame *LL::removeTail() {
@@ -208,7 +211,7 @@ HeapPage *Buffer::pinPage(Key key) {
         Frame *cached = this->cache.set(search);
         if (cached) { 
             if (cached->dirty) {
-                // Flush
+                // TODO: WRITE THE PAGE
             }
 
             delete cached;

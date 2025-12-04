@@ -4,3 +4,4 @@
 #include <spaceMap.hh>
 #include <headerPage.hh>
 #include <buffer.hh>
+#include <disk.hh>

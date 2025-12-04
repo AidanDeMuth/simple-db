@@ -1,25 +1,36 @@
-#include <buffer.hh>
+#include <simpledb.hh>
+#include <assert.h>
 
-void testLRUCache() {
-    LRUCache cache = LRUCache(100);
-    cache.set(new Frame(Key(1), new HeapPage()));
-    cache.set(new Frame(Key(2), new HeapPage()));
-    cache.set(new Frame(Key(102), new HeapPage()));
-    cache.get(Key(2));
-    // cache.dump();
+void testLRUCacheSimple() {
+    LRUCache cache = LRUCache(3);
+    assert(cache.capacity == 3);
+    
+    for (int i = 0; i < 3; i++) {
+        cache.set(new Frame(Key(i), new HeapPage()));
+    }
+
+    assert(cache.size == 3);
+
+    for (int i = 0; i < 3; i++) {
+        Frame *check = cache.get(Key(i));
+        assert(check->key.pageid == i);
+    }
 }
 
-void testBuffer() {
-    Buffer *buf = new Buffer(100);
-    buf->pinPage(Key(1));
-    // buf->dump();
-
-
-    buf->unpinPage(Key(1));
-    // buf->dump();
+void testLRUCacheReplacement() {
+    LRUCache cache = LRUCache(100);
+    for (int i = 0; i < 200; i++) {
+        cache.set(new Frame(Key(i), new HeapPage()));
+    }
+    // Ensure old ones got replaced
+    assert(cache.size == 100);
+    for (int i = 100; i < 200; i++) {
+        Frame *check = cache.get(Key(i));
+        assert(check->key.pageid == i);
+    }
 }
 
 int main() {
-    testLRUCache();
-    testBuffer();
+    testLRUCacheSimple();
+    testLRUCacheReplacement();
 }

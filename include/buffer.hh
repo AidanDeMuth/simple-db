@@ -84,8 +84,8 @@ public:
     LL();
     ~LL();
 
-    void insertHead(Frame *Frame);
-    void moveToHead(Frame *Frame);
+    void insertHead(Frame *frame);
+    void moveToHead(Frame *frame);
     Frame *removeTail();
 
     void dump();

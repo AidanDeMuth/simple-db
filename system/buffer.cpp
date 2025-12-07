@@ -3,57 +3,61 @@
 // LINKED LIST FUNCTIONS
 
 LL::LL() {
-    head = nullptr;
-    tail = nullptr;
+    // SENTINEL nodes
+    head = new Frame();
+    tail = new Frame();
+
+    head->prev = nullptr;
+    head->next = tail;
+
+    tail->prev = head;
+    tail->next = nullptr;
 }
 
-LL::~LL() {}
+LL::~LL() {
+    // Come up with a destructor
+}
 
 void LL::insertHead(Frame *frame) {
-    frame->prev = nullptr;
-    frame->next = head;
+    frame->prev = head;
+    frame->next = head->next;
 
-    if (head) { head->prev = frame; }
-    head = frame;
-
-    // If first entry, need to adjust the tail
-    if (!tail) { tail = frame; }
+    head->next->prev = frame;
+    head->next = frame;
 }
 
 void LL::moveToHead(Frame *frame) {
-    // Can be from arbitrary location
-    if (frame == head) { return; }
+    // bail
+    if (frame->prev == head) { return; }
 
-    // Now, node is in [second element, tail], so detach
-    if (frame->prev) { frame->prev->next = frame->next; }
-    if (frame->next) { frame->next->prev = frame->prev; }
-    if (frame == tail) { tail = frame->prev; }
+    // unlink
+    frame->prev->next = frame->next;
+    frame->next->prev = frame->prev;
 
-    frame->prev = nullptr;
-    frame->next = head;
-    if (head) head->prev = frame;
-    head = frame; 
+    frame->prev = head;
+    frame->next = head->next;
+
+    head->next->prev = frame;
+    head->next = frame;
 }
 
 Frame *LL::removeTail() {
-    if (!tail) { return nullptr; }
+    if (tail->prev == head) { return nullptr; }
 
-    Frame *ret = tail; // save reference
+    Frame *ret = tail->prev; // save reference
 
-    // we do have a tail, unlink it and set head/tail correctly
-    // otherwise
-    if (tail->prev) { tail->prev->next = nullptr; }
-    else { head = nullptr; }
+    // unlink
+    ret->prev->next = tail;
+    tail->prev = ret->prev;
 
-    tail = tail->prev;
     return ret;
 }
 
 void LL::dump() {
-    Frame *iterate = head;
+    Frame *iterate = head->next;
     
     printf("Dumping linked list: PID, page\n");
-    while (iterate) {
+    while (iterate != tail) {
         iterate->print();
         
         iterate = iterate->next;

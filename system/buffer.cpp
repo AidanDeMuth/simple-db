@@ -1,11 +1,8 @@
 #include <buffer.hh>
 
-// LINKED LIST FUNCTIONS
-
 LL::LL() {
-    // SENTINEL nodes
-    head = new Frame();
-    tail = new Frame();
+    head = new Frame(); /* SENTINEL head */
+    tail = new Frame(); /* SENTINEL tail */
 
     head->prev = nullptr;
     head->next = tail;
@@ -41,14 +38,28 @@ void LL::moveToHead(Frame *frame) {
     head->next = frame;
 }
 
-Frame *LL::removeTail() {
+/* evict()
+ *
+ * Normally in an LRU cache we take from the tail, but, we have pin counts to deal
+ * with and don't want to evict a node with a > 0 pin count. Instead, crawl up the list and
+ * see if there is one we can take.
+ */
+Frame *LL::evict() {
     if (tail->prev == head) { return nullptr; }
 
     Frame *ret = tail->prev; // save reference
 
-    // unlink
-    ret->prev->next = tail;
-    tail->prev = ret->prev;
+    // Crawl backwards until we find a frame without pins
+    while ((ret != head) && (ret->pinCount > 0)) { 
+        ret = ret->prev;
+    }
+
+    // We might end up at the head, bail
+    if (ret == head) { return nullptr; }
+
+    // we found one, unlink
+    ret->prev->next = ret->next;
+    ret->next->prev = ret->prev;
 
     return ret;
 }
@@ -65,8 +76,8 @@ void LL::dump() {
     printf("=================\n\n");
 }
 
-// HASHTABLE FUNCTIONS
 
+/* Hashtable Functions */
 HT::HT() {
     for (int i = 0; i < HT_SIZE; i++) {
         table[i] = nullptr;
@@ -136,8 +147,7 @@ void HT::dump() {
     printf("=================\n\n");
 }
 
-// LRU CACHE FUNCTIONS
-
+/* Cache Functions */
 LRUCache::LRUCache(int32 capacity) {
     this->capacity = capacity;
     this->size = 0;
@@ -147,38 +157,53 @@ LRUCache::~LRUCache() {}
 
 Frame *LRUCache::get(Key key) {
     Frame *found = this->ht.find(key);
+
     if (!found) { return nullptr; } // Cache miss
 
     this->ll.moveToHead(found);
     return found; // hit
 }
 
-/* 
- * Returns the evicted frame
+/* set()
+ * frame: the frame intended to be added to the cache
+ * evict: if a frame is evicted when set, this var is set to that frame
+ *
+ * If the given frame is already in the cache, it will be moved to the front of the
+ * list. If it isn't, a node will be (or attempted to be) evicted from the linked
+ * list and placed in the 'evict' param.
  */
-Frame *LRUCache::set(Frame *frame) {
+bool LRUCache::set(Frame *frame, Frame **evict) {
+    /* If in the cache already, move to the front */
     Frame *found = this->ht.find(frame->key);
-
     if (found) {
-        // Already in the cache, just move to head
         this->ll.moveToHead(found);
-        return nullptr; // No eviction
+        *evict = nullptr;
+        return true;
     }
 
-    // Not in cache, so insert the frame
+    /* If the cache is full, determine if we can evict something */
+    Frame *candidate = nullptr;
+    if (this->size >= this->capacity) {
+        candidate = this->ll.evict();
+
+        if (!candidate) {
+            return false; // All are pinned
+        }
+
+        /* Something will be evicted, set it in the param */
+
+        this->ht.remove(candidate->key);
+        this->size--;  
+        *evict = candidate;
+    }
+    else { *evict = nullptr; }
+
+    /* Safe to insert */
     this->ll.insertHead(frame);
     this->ht.insert(frame);
     this->size++;
 
-    // SIZE CHECK- might need to evict
-    if (this->size > this->capacity) {
-        Frame *evict = this->ll.removeTail();
-        this->ht.remove(evict->key);
-        this->size--;  
-        return evict; // let the buffer deal with it
-    }
-
-    return nullptr;
+    return true;
 }
 
 void LRUCache::dump() {
@@ -188,7 +213,6 @@ void LRUCache::dump() {
 }
 
 /* BUFFER Functions */
-
 Buffer::Buffer(int32 capacity, Disk &disk) : cache(capacity), disk(disk) {}
 
 Buffer::~Buffer() {}
@@ -198,47 +222,37 @@ Buffer::~Buffer() {}
  * outPage: Pointer to a page pointer, which is set to the desired
  *          page.
  *
- * We need to roughly follow "does the page exist in the cache? If it does, get it and pin it, 
- * otherwise pull it from disk and add it to the cache."
+ * Will either increment the pin count of a page in the buffer, or
+ * pull the page from disk and set it in 'outPage.'
  */
 BufferStatus Buffer::pinPage(Key key, Page **outPage) {
+    // Check cache. If in cache, simply increment pin count
     Frame *search = this->cache.get(key);
-
-    if (!search) { 
-        // Not in cache, need to check disk
-        Frame *newFrame = new Frame();
-        DiskStatus readStatus = this->disk.readPage(key.pageid, newFrame->page->getData());
-        if (readStatus != DiskStatus::OK) {
-            delete newFrame;
-            *outPage = nullptr;
-
-            return BufferStatus::IOError;
-        }
-        newFrame->key = key;
-
-        // Insert into cache
-        Frame *evicted = this->cache.set(newFrame);
-        if (evicted) { 
-            // Write evicted page to disk if dirty
-            if (evicted->dirty) {
-                DiskStatus writeStatus = this->disk.writePage(evicted->key.pageid, evicted->page->getData());
-
-                if (writeStatus != DiskStatus::OK) {
-                    delete evicted;
-                    *outPage = nullptr;
-
-                    return BufferStatus::IOError;
-                }
-            }
-
-            delete evicted;
-        }
-
-        search = newFrame;
+    if (search) {
+        search->pinCount++;
+        *outPage = search->page;
+        return BufferStatus::OK;
     }
 
-    search->pinCount++;
-    *outPage = search->page;
+    /* It must be in the disk. Fetch from disk */
+    Frame *newFrame = new Frame(key);
+    DiskStatus readStatus = this->disk.readPage(key.pageid, newFrame->page->getData());
+    if (readStatus != DiskStatus::OK) { // Rare, but a disk read can fail so we don't need the frame
+        delete newFrame;
+        return BufferStatus::IOError;
+    }
+
+    /* Now have a valid frame, try to insert into the cache */
+    Frame *evicted = nullptr;
+    if (!this->cache.set(newFrame, &evicted)) {
+        delete newFrame;
+        return BufferStatus::AllPinned;
+    }
+    delete evicted; /* We may or may not have one, but if we do, we want it freed */
+
+    /* Finally, pin */
+    newFrame->pinCount++;
+    *outPage = newFrame->page;
     return BufferStatus::OK;
 }
 
@@ -251,6 +265,11 @@ void Buffer::markDirty(Key key) {
     search->dirty = true;
 }
 
+/* unpinPage()
+ * key: unique identifier for a page in the buffer
+ *
+ * Will decrement the pin count of a page in the buffer. No disk opertions.
+ */
 BufferStatus Buffer::unpinPage(Key key) {
     Frame *search = this->cache.get(key);
     if (!search) { 
@@ -259,6 +278,7 @@ BufferStatus Buffer::unpinPage(Key key) {
 
     search->pinCount--;
 
+    /* maybe this will save me a horrible debug later */
     if (search->pinCount < 0) {
         return BufferStatus::NegativePins;
     }

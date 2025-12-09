@@ -29,6 +29,7 @@ public:
 
     /* Access the buffer */
     byte *getData();
+    
 
     /* PAGE I/O */
     void writeByte(int16 loc, byte val);
@@ -52,9 +53,7 @@ public:
     int16 readPageType();
     int16 readFreePtr();
     int16 readFreeSpace();
-
-    void formatGeneric();
-
+    
     void dump();
 };
 

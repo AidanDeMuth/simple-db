@@ -40,17 +40,6 @@ int32 Page::readInt32(int16 loc) {
             ((int32) data[loc + 3]);
 }
 
-/* Dump a 32 byte wide map of the page for debugging */
-void Page::dump() {
-    printf("\nDUMPING PAGE BYTES\n------------------\n");
-    for (int i = 0; i < PAGE_SIZE; i++) {
-        if (i % 32 == 0) { printf("\n"); } // Create a new line every 32 bytes
-        // printf("%02X ", page->data[i]);
-        printf("%d ", (int32) data[i]);
-    }
-    printf("\n");
-}
-
 /* TABLE METADATA WRITES */
 void Page::writePageID(int32 val) { writeInt32(LOC_PAGE_ID, val); }
 void Page::writePrevID(int32 val) { writeInt32(LOC_PREV_PAGE, val); }
@@ -67,11 +56,14 @@ int16 Page::readPageType() { return readInt16(LOC_PAGE_TYPE); };
 int16 Page::readFreePtr() { return readInt16(LOC_FREE_PTR); };
 int16 Page::readFreeSpace() { return readInt16(LOC_FREE_SPACE); };
 
-void Page::formatGeneric() {
-    writePageID(P_NULL);
-    writePrevID(P_NULL);
-    writeNextID(P_NULL);
-    writePageType(P_NULL);
-    writeFreePtr(P_NULL);
-    writeFreeSpace(P_NULL);
+
+/* Dump a 32 byte wide map of the page for debugging */
+void Page::dump() {
+    printf("\nDUMPING PAGE BYTES\n------------------\n");
+    for (int i = 0; i < PAGE_SIZE; i++) {
+        if (i % 32 == 0) { printf("\n"); } // Create a new line every 32 bytes
+        // printf("%02X ", page->data[i]);
+        printf("%d ", (int32) data[i]);
+    }
+    printf("\n");
 }

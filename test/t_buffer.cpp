@@ -5,10 +5,12 @@ void testLRUCacheSimple() {
     LRUCache cache = LRUCache(3);
     assert(cache.capacity == 3);
     
+    Frame *evict = nullptr;
     for (int i = 0; i < 3; i++) {
-        cache.set(new Frame(Key(i)));
+        cache.set(new Frame(Key(i)), &evict);
     }
 
+    assert(evict == nullptr);
     assert(cache.size == 3);
 
     for (int i = 0; i < 3; i++) {
@@ -19,18 +21,26 @@ void testLRUCacheSimple() {
 
 void testLRUCacheReplacement() {
     LRUCache cache = LRUCache(100);
-    for (int i = 0; i < 200; i++) {
-        cache.set(new Frame(Key(i)));
+
+    Frame *evict = nullptr;
+    for (int i = 0; i < 100; i++) {
+        cache.set(new Frame(Key(i)), &evict);
     }
+    for (int i = 100; i < 200; i++) {
+        cache.set(new Frame(Key(i)), &evict);
+        assert(evict->key.pageid == (i - 100));
+    }
+
     // Ensure old ones got replaced
     assert(cache.size == 100);
     for (int i = 100; i < 200; i++) {
         Frame *check = cache.get(Key(i));
+
         assert(check->key.pageid == i);
     }
 }
 
-void testReadWriteFlush() {
+void testPins() {
     Disk *disk = new Disk("/home/ec2-user/simple-db/test/test_db_files/test_buffer_rw");
     Buffer buffer = Buffer(3, *disk);
 
@@ -55,8 +65,13 @@ void testReadWriteFlush() {
     assert(myPage->readByte(5) == 'A');
 
     struct stat st;
-    if (stat(disk->filePath.c_str(), &st) == -1) { assert(1 == 2); }
+    assert(stat(disk->filePath.c_str(), &st) != -1);
     assert(st.st_size == (PAGE_SIZE * 4));
+
+    assert(buffer.pinPage(3, &myPage) == BufferStatus::AllPinned);
+    assert(myPage->readByte(5) == 'A');
+    
+    assert(buffer.unpinPage(0) == BufferStatus::OK);
 
     assert(buffer.pinPage(3, &myPage) == BufferStatus::OK);
     assert(myPage->readByte(5) == 'A');
@@ -66,14 +81,14 @@ void testReadWriteFlush() {
     assert(buffer.unpinPage(2) == BufferStatus::OK);
     assert(buffer.unpinPage(3) == BufferStatus::OK);
 
-    // buffer.dump();
+    buffer.dump();
     
     disk->closeDB();
     disk->deleteDB();
-}
+} 
 
 int main() {
     testLRUCacheSimple();
     testLRUCacheReplacement();
-    testReadWriteFlush();
+    testPins();
 }

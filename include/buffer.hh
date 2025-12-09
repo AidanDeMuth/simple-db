@@ -8,18 +8,19 @@
 constexpr int32 HT_SIZE = 100;
 constexpr int32 HT_MODULO = 100;
 
-/* Buffer Status Enums - for error handling */
+/* Error codes for the Buffer - Useful, given there are many reasons for failure */
 enum class BufferStatus {
     OK,
     IOError,
     NegativePins,
-    NotFound
+    NotFound,
+    AllPinned
 };
 
 /* Key
  *
- * The key struct is a grouping of unique identifiers for a frame. They
- * are seperated so that they can be easily compared and hashed.
+ * The key struct is a grouping of unique identifiers for a frame. Provides functionality
+ * for hashing and comparing.
  */
 struct Key {
     int32 pageid;
@@ -48,14 +49,14 @@ struct Frame {
     Key key;
     Page *page;
 
-    bool dirty; /* Dirty bit, described whether a page has been written to or not in the cache */
+    bool dirty;     /* Dirty bit, described whether a page has been written to or not in the cache */
     int32 pinCount; /* The number of active transactions using the page- essentially > 0 means DO NOT EVICT ME */
 
     /* PREV and NEXT pointers for the LINKED LIST */
     Frame *prev;
     Frame *next;
 
-    /* CHAIN POINTERS for the HASHTABLE */
+    /* BUCKET CHAIN pointers for the HASHTABLE */
     Frame *bucketNext;
 
     Frame() :
@@ -80,12 +81,16 @@ struct Frame {
         delete page;
     }
 
-    void print() { // Debug
+    void print() {
         printf("Key: "); key.print();
         printf("HP ptr: %p\t dirty: %d\t pin count: %d\n", page, dirty, pinCount);
     }
 };
 
+/* LL()
+ *
+ * Linked List class for the LRU Cache
+ */
 class LL {
 public:
     Frame *head;
@@ -96,11 +101,15 @@ public:
 
     void insertHead(Frame *frame);
     void moveToHead(Frame *frame);
-    Frame *removeTail();
+    Frame *evict();
 
     void dump();
 };
 
+/* HT()
+ *
+ * Hashtable class for the LRU Cache
+ */
 class HT {
 public:
     Frame *table[HT_SIZE];
@@ -119,12 +128,10 @@ public:
 
 /* class LRUCache()
  *
- * 
+ * Implementation of an LRU cache, wrapping classes LL and HT
  */
 class LRUCache {
 public:
-    // I think these should be direct members so
-    // they are less annoying
     LL ll;
     HT ht;
 
@@ -135,7 +142,7 @@ public:
     ~LRUCache();
 
     Frame *get(Key key);
-    Frame *set(Frame *frame);
+    bool set(Frame *frame, Frame **evict);
 
     void dump();
 };
@@ -143,11 +150,8 @@ public:
 /* class Buffer()
  *
  * Wraps LRU cache and provides the API of the buffer manager. This class
- * MANAGES MEMORY, as it is responsible for the allocation of Frames and
- * heap pages, as well as their deletion.
- *
- * 
- *
+ * MANAGES MEMORY, as it is responsible for the allocation and deletion of 
+ * Frames
  */
 class Buffer {
 public:
@@ -160,7 +164,6 @@ public:
     BufferStatus pinPage(Key key, Page **outPage);
     void markDirty(Key key);
     BufferStatus unpinPage(Key key);
-    BufferStatus flushBuffer();
 
     void dump();
 };

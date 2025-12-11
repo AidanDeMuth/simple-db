@@ -4,6 +4,26 @@ Page::Page() {  }
 
 Page::~Page() {  }
 
+Header Page::readHeader() {
+    Header h;
+    h.pageid = readPageID();
+    h.prevPage = readPrevID();
+    h.nextPage = readNextID();
+    h.pageType = readPageType();
+    h.freePtr = readFreePtr();
+    h.freeSpace = readFreeSpace();
+    return h;
+}
+
+void Page::writeHeader(Header h) {
+    writePageID(h.pageid);
+    writePrevID(h.prevPage);
+    writeNextID(h.nextPage);
+    writePageType(h.pageType);
+    writeFreePtr(h.freePtr);
+    writeFreeSpace(h.freeSpace);
+}
+
 byte *Page::getData() {
     return this->data;
 }

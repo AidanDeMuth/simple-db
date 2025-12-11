@@ -7,6 +7,19 @@
 /* Globally defined page size in bytes */
 constexpr int16 PAGE_SIZE = 4096;
 
+/* Container for all information found in a struct
+ *
+ * We don't care about the size here, just need this accessible in memory
+ */
+struct Header {
+    int32 pageid;
+    int32 prevPage;
+    int32 nextPage;
+    int16 pageType;
+    int16 freePtr;
+    int16 freeSpace;
+};
+
 /* Special locations that are constant to EVERY page */
 constexpr int32 LOC_PAGE_ID = 0;
 constexpr int32 LOC_PREV_PAGE = 4;
@@ -29,7 +42,10 @@ public:
 
     /* Access the buffer */
     byte *getData();
-    
+
+    /* Header Metadata, not super useful, just cleaner than raw accesses in the buffer */
+    Header readHeader();
+    void writeHeader(Header h);
 
     /* PAGE I/O */
     void writeByte(int16 loc, byte val);

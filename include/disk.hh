@@ -9,6 +9,7 @@
 
 #include <string>
 #include <cstring>
+#include <stdexcept>
 
 enum class DiskStatus {
     OK,
@@ -28,6 +29,8 @@ public:
 
     Disk(std::string filePath);
     ~Disk();
+
+    void checkPageId(int32 pageid);
     
     DiskStatus openDB();
     DiskStatus createDB();

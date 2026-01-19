@@ -9,6 +9,23 @@ Disk::~Disk() {
     if (this->fd != SYSERR) { close(this->fd); }
 }
 
+void Disk::checkPageId(int32 pageid) {
+    /* Some condition to validate bounds */
+}
+
+DiskStatus Disk::openDB() {
+    if (this->isOpen) { return DiskStatus::FileAlreadyOpen; } // error already open?
+
+    this->fd = open(this->filePath.c_str(), O_RDWR, 0666);
+    if (this->fd == SYSERR) { 
+        perror("open");
+        return DiskStatus::IOError;
+    }
+
+    this->isOpen = true;
+    return DiskStatus::OK;
+}
+
 DiskStatus Disk::createDB() {
     // Don't create if the file already exists
     if (access(this->filePath.c_str(), F_OK) != SYSERR) {
@@ -29,19 +46,6 @@ DiskStatus Disk::createDB() {
     /* OTHER INIT STUFF???? */
 
     close(this->fd);
-    return DiskStatus::OK;
-}
-
-DiskStatus Disk::openDB() {
-    if (this->isOpen) { return DiskStatus::FileAlreadyOpen; } // error already open?
-
-    this->fd = open(this->filePath.c_str(), O_RDWR, 0666);
-    if (this->fd == SYSERR) { 
-        perror("open");
-        return DiskStatus::IOError;
-    }
-
-    this->isOpen = true;
     return DiskStatus::OK;
 }
 

@@ -14,7 +14,8 @@ enum class BufferStatus {
     IOError,
     NegativePins,
     NotFound,
-    AllPinned
+    AllPinned,
+    InvalidState
 };
 
 /* Key
@@ -164,6 +165,9 @@ public:
     BufferStatus pinPage(Key key, Page **outPage);
     void markDirty(Key key);
     BufferStatus unpinPage(Key key);
+    BufferStatus flush();
+    
+    void checkPageId(int32 pageid);
 
     void dump();
 };

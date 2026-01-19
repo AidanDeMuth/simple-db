@@ -12,7 +12,9 @@ LL::LL() {
 }
 
 LL::~LL() {
-    // Come up with a destructor
+    /* Linked list only owns the HEAD and TAIL sentinels */
+    delete head;
+    delete tail;
 }
 
 void LL::insertHead(Frame *frame) {
@@ -215,7 +217,10 @@ void LRUCache::dump() {
 /* BUFFER Functions */
 Buffer::Buffer(int32 capacity, Disk &disk) : cache(capacity), disk(disk) {}
 
-Buffer::~Buffer() {}
+/* Will not write dirty pages to disk, will forcefully clear the memory */
+Buffer::~Buffer() {
+    
+}
 
 /* pinPage()
  * key: key struct uniquely identifying a page
@@ -242,16 +247,26 @@ BufferStatus Buffer::pinPage(Key key, Page **outPage) {
         return BufferStatus::IOError;
     }
 
+    /* Update pin count before insertion, so we don't insert it with zero pins */
+    newFrame->pinCount++;
+
     /* Now have a valid frame, try to insert into the cache */
     Frame *evicted = nullptr;
     if (!this->cache.set(newFrame, &evicted)) {
         delete newFrame;
         return BufferStatus::AllPinned;
     }
+    
+    /* If there is a victim and it is dirty, write it to disk */
+    if (evicted && evicted->dirty) {
+        DiskStatus write = this->disk.writePage(evicted->key.pageid, evicted->page->getData());
+
+        if (write != DiskStatus::OK) { delete evicted; return BufferStatus::IOError; }
+    }
     delete evicted; /* We may or may not have one, but if we do, we want it freed */
 
-    /* Finally, pin */
-    newFrame->pinCount++;
+
+
     *outPage = newFrame->page;
     return BufferStatus::OK;
 }
@@ -284,6 +299,34 @@ BufferStatus Buffer::unpinPage(Key key) {
     }
 
     return BufferStatus::OK;
+}
+
+/* flush()
+ *
+ * Will iterate over the frames in the buffer, writing each to disk
+ * with a dirty bit.
+ */
+BufferStatus Buffer::flush() {
+    Frame *iterate = this->cache.ll.head->next;
+
+    while (iterate != this->cache.ll.tail) {
+        /* Try a page write if dirty, otherwise bail */
+        if (iterate->dirty) {
+            DiskStatus write = this->disk.writePage(iterate->key.pageid, iterate->page->getData());
+
+            if (write != DiskStatus::OK) { return BufferStatus::IOError; }
+            iterate->dirty = false;
+        }
+
+        iterate = iterate->next;
+    }
+
+    return BufferStatus::OK;
+}
+
+void Buffer::checkPageId(int32 pageid) {
+    /* For now... */
+    disk.checkPageId(pageid);
 }
 
 void Buffer::dump() {

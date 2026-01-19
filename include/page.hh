@@ -6,6 +6,7 @@
 
 /* Globally defined page size in bytes */
 constexpr int16 PAGE_SIZE = 4096;
+constexpr int32 INVALID_PAGE = -1;
 
 /* Container for all information found in a struct
  *

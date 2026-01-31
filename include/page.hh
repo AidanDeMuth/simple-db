@@ -10,8 +10,10 @@ constexpr int32 INVALID_PAGE = -1;
 
 /* Container for all information found in a struct
  *
- * We don't care about the size here, just need this accessible in memory
+ * We don't really care about this, having the size is just nice.
  */
+
+#pragma pack(1)
 struct Header {
     int32 pageid;
     int32 prevPage;
@@ -20,6 +22,9 @@ struct Header {
     int16 freePtr;
     int16 freeSpace;
 };
+#pragma pack()
+
+constexpr int32 HEADER_SIZE = sizeof(Header);
 
 /* Special locations that are constant to EVERY page */
 constexpr int32 LOC_PAGE_ID = 0;

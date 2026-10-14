@@ -1,14 +1,11 @@
 #include <heapScan.hh>
 
-HeapScan::HeapScan(int32 currid, Buffer &buffer) : currid(currid), buffer(buffer), currPage(nullptr) {
-    /* Will throw an ERROR if the page is invalid */
-    this->buffer.checkPageId(this->currid);
-    this->currPage = new Page();
-}
+/* An invalid starting page is reported by startScan(), since pinPage
+ * validates the page id
+ */
+HeapScan::HeapScan(int32 currid, Buffer &buffer) : currid(currid), buffer(buffer), currPage(nullptr) {}
 
-HeapScan::~HeapScan() { 
-    delete this->currPage;
-}
+HeapScan::~HeapScan() { endScan(); }
 
 BufferStatus HeapScan::startScan() {
     /* Pin the first page */
@@ -33,15 +30,9 @@ BufferStatus HeapScan::next() {
     }
 
     /* Pin the next page */
+    this->currPage = nullptr;
     this->currid = nextId;
-    BufferStatus pin = buffer.pinPage(Key(nextId), &this->currPage);
-    if (pin != BufferStatus::OK) {
-        return pin;
-    }
-
-    /* Next the prev to the pinned */
-
-    return BufferStatus::OK;
+    return buffer.pinPage(Key(nextId), &this->currPage);
 }
 
 BufferStatus HeapScan::endScan() {

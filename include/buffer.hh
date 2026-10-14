@@ -15,7 +15,8 @@ enum class BufferStatus {
     NegativePins,
     NotFound,
     AllPinned,
-    InvalidState
+    InvalidState,
+    InvalidPage
 };
 
 /* Key
@@ -102,7 +103,8 @@ public:
 
     void insertHead(Frame *frame);
     void moveToHead(Frame *frame);
-    Frame *evict();
+    void remove(Frame *frame);
+    Frame *findVictim();
 
     void dump();
 };
@@ -143,6 +145,9 @@ public:
     ~LRUCache();
 
     Frame *get(Key key);
+    Frame *victim();
+    void insert(Frame *frame);
+    void remove(Frame *frame);
     bool set(Frame *frame, Frame **evict);
 
     void dump();
@@ -167,7 +172,7 @@ public:
     BufferStatus unpinPage(Key key);
     BufferStatus flush();
     
-    void checkPageId(int32 pageid);
+    BufferStatus checkPageId(int32 pageid);
 
     void dump();
 };

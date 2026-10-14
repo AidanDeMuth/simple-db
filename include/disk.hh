@@ -18,7 +18,8 @@ enum class DiskStatus {
     FileAlreadyOpen,
     IOError,
     ReadError,
-    WriteError
+    WriteError,
+    InvalidPage
 };
 
 class Disk {
@@ -26,11 +27,13 @@ public:
     bool isOpen;
     int32 fd; /* File Descriptor of the instance's file */
     std::string filePath; /* file path of the DB file */
+    int32 numPages; /* Pages in the file, valid ids are [0, numPages) */
 
     Disk(std::string filePath);
     ~Disk();
 
-    void checkPageId(int32 pageid);
+    DiskStatus checkPageId(int32 pageid);
+    DiskStatus allocatePage(int32 *outId);
     
     DiskStatus openDB();
     DiskStatus createDB();

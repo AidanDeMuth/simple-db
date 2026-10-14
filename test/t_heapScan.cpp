@@ -1,8 +1,10 @@
 #include <simpledb.hh>
 #include <assert.h>
 
+std::string path = "test/test_db_files/simple-scan";
+
 void testSimpleScan() {
-    Disk *disk = new Disk("/home/ec2-user/simple-db/test/test_db_files/simple-scan");
+    Disk *disk = new Disk(path);
     Buffer buffer = Buffer(3, *disk);
 
     disk->createDB();

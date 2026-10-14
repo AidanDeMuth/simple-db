@@ -1,8 +1,10 @@
 #include <simpledb.hh>
 #include <assert.h>
 
+std::string path = "test/test_db_files/test_disk.txt";
+
 void testCreateOpenClose() {
-    Disk *disk = new Disk("/home/ec2-user/simple-db/test/test_db_files/test_disk.txt");
+    Disk *disk = new Disk(path);
     DiskStatus create = disk->createDB();
     assert(create == DiskStatus::OK);
 
@@ -23,7 +25,7 @@ void testCreateOpenClose() {
 }
 
 void testReadAndWrite() {
-    Disk *disk = new Disk("/home/ec2-user/simple-db/test/test_db_files/test_disk.txt");
+    Disk *disk = new Disk(path);
     disk->createDB();
     disk->openDB();
 

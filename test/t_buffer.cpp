@@ -1,6 +1,8 @@
 #include <simpledb.hh>
 #include <assert.h>
 
+std::string path = "test/test_db_files/test_buffer_rw";
+
 void testLRUCacheSimple() {
     LRUCache cache = LRUCache(3);
     assert(cache.capacity == 3);
@@ -41,7 +43,7 @@ void testLRUCacheReplacement() {
 }
 
 void testPins() {
-    Disk *disk = new Disk("/home/ec2-user/simple-db/test/test_db_files/test_buffer_rw");
+    Disk *disk = new Disk(path);
     Buffer buffer = Buffer(3, *disk);
 
     disk->createDB();
